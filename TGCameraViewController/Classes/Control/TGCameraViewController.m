@@ -46,12 +46,15 @@
 @property (strong, nonatomic) IBOutlet UIButton *flashButton;
 @property (strong, nonatomic) IBOutlet TGCameraSlideView *slideUpView;
 @property (strong, nonatomic) IBOutlet TGCameraSlideView *slideDownView;
+@property (strong, nonatomic) UIView *overlayView;
 
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *topViewHeight;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomViewHeightFixed;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomViewHeightFill;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *toggleButtonWidth;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *captureViewAspect;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *gridButtonWidth;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *flashLeadingConstraint;
 
 @property (strong, nonatomic) TGCamera *camera;
 @property (nonatomic) BOOL wasLoaded;
@@ -100,6 +103,7 @@
         }
     }
     
+    
     if ([[TGCamera getOption:kTGCameraOptionHiddenAlbumButton] boolValue] == YES) {
         _albumButton.hidden = YES;
     }
@@ -109,6 +113,12 @@
         _captureViewAspect.active = NO;
     } else {
         _bottomViewHeightFixed.active = NO;
+    }
+    
+    if ([[TGCamera getOption:kTGCameraOptionCustomCropSize] boolValue] == YES) {
+        _gridButton.hidden = YES;
+        _gridButtonWidth.constant = 0;
+        _flashLeadingConstraint.constant = -25;
     }
     
     [_albumButton.layer setCornerRadius:10.f];
@@ -162,6 +172,21 @@
 {
     [super viewDidAppear:animated];
     
+    if ([[TGCamera getOption:kTGCameraOptionCustomCropSize] boolValue] == YES) {
+        CGFloat halfWidth = _captureView.frame.size.width / 2.5;
+        self.overlayView = [[UIView alloc] initWithFrame:CGRectMake((_captureView.frame.size.width - halfWidth) / 2,
+                                                                   (_captureView.frame.size.height/2) - 25,
+                                                                   halfWidth,
+                                                                   35)
+                           ];
+        
+        [self.overlayView setBackgroundColor:UIColor.clearColor];
+        self.overlayView.layer.borderColor = UIColor.grayColor.CGColor;
+        self.overlayView.layer.borderWidth = 3.0f;
+        
+        [self.captureView addSubview:self.overlayView];
+    }
+    
     [self deviceOrientationDidChangeNotification];
     
     _separatorView.hidden = YES;
@@ -170,7 +195,7 @@
         _topLeftView.hidden =
         _topRightView.hidden =
         _bottomLeftView.hidden =
-        _bottomRightView.hidden = NO;
+        _bottomRightView.hidden = [[TGCamera getOption:kTGCameraOptionCustomCropSize] boolValue];
         
         _actionsView.hidden = NO;
         
@@ -261,6 +286,10 @@
         cropSize = _captureView.frame.size;
     }
     
+    if ([[TGCamera getOption:kTGCameraOptionCustomCropSize] boolValue] == YES) {
+        cropSize = CGSizeMake(_captureView.frame.size.width / 2.5, 40);
+    }
+    
     dispatch_group_t group = dispatch_group_create();
     __block UIImage *photo;
     
@@ -272,7 +301,7 @@
     dispatch_group_enter(group);
     [_camera takePhotoWithCaptureView:_captureView videoOrientation:videoOrientation cropSize:cropSize completion:^(UIImage *_photo) {
         photo = _photo;
-        dispatch_group_leave(group);
+        [_delegate cameraDidTakePhoto:photo];
     }];
     
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{

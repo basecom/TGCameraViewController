@@ -72,10 +72,49 @@
 #pragma mark -
 #pragma mark - Private methods
 
+
++ (UIImage *)image:(UIImage*)image croppedImageInRect:(CGRect)rect
+{
+    double (^rad)(double) = ^(double deg) {
+        return deg / 180.0 * M_PI;
+    };
+    
+    CGAffineTransform rectTransform;
+    switch (image.imageOrientation) {
+        case UIImageOrientationLeft:
+            rectTransform = CGAffineTransformTranslate(CGAffineTransformMakeRotation(rad(90)), 0, -image.size.height);
+            break;
+        case UIImageOrientationRight:
+            rectTransform = CGAffineTransformTranslate(CGAffineTransformMakeRotation(rad(-90)), -image.size.width, 0);
+            break;
+        case UIImageOrientationDown:
+            rectTransform = CGAffineTransformTranslate(CGAffineTransformMakeRotation(rad(-180)), -image.size.width, -image.size.height);
+            break;
+        default:
+            rectTransform = CGAffineTransformIdentity;
+    };
+    rectTransform = CGAffineTransformScale(rectTransform, image.scale, image.scale);
+    
+    CGImageRef imageRef = CGImageCreateWithImageInRect([image CGImage], CGRectApplyAffineTransform(rect, rectTransform));
+    UIImage *result = [UIImage imageWithCGImage:imageRef scale:image.scale orientation:image.imageOrientation];
+    CGImageRelease(imageRef);
+    
+    return result;
+}
+
 + (UIImage *)cropImage:(UIImage *)image withCropSize:(CGSize)cropSize
 {
     UIImage *newImage = nil;
     
+    CGFloat halfWidth = image.size.width / 2.5;
+    return [TGCameraShot image:image croppedImageInRect:
+            CGRectMake((image.size.width - halfWidth) / 2,
+                       image.size.height/2 - cropSize.height * 4,
+                       halfWidth,
+                       cropSize.height * 5
+                       )
+            ];
+    /*
     CGSize imageSize = image.size;
     CGFloat width = imageSize.width;
     CGFloat height = imageSize.height;
@@ -102,7 +141,6 @@
         scaledWidth  = width * scaleFactor;
         scaledHeight = height * scaleFactor;
         
-
         if (widthFactor > heightFactor) {
             thumbnailPoint.y = (targetHeight - scaledHeight) * .5f;
         } else {
@@ -124,7 +162,7 @@
     
     UIGraphicsEndImageContext();
     
-    return newImage;
+    return newImage;*/
 }
 
 @end
