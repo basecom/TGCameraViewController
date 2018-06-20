@@ -168,12 +168,16 @@
     [_camera startRunning];
 }
 
++(CGFloat)overlayWidth {
+    return 4.0;
+}
+
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
     
     if ([[TGCamera getOption:kTGCameraOptionCustomCropSize] boolValue] == YES) {
-        CGFloat halfWidth = _captureView.frame.size.width / 2.5;
+        CGFloat halfWidth = _captureView.frame.size.width / [TGCameraViewController overlayWidth];
         self.overlayView = [[UIView alloc] initWithFrame:CGRectMake((_captureView.frame.size.width - halfWidth) / 2,
                                                                    (_captureView.frame.size.height/2) - 25,
                                                                    halfWidth,
@@ -287,7 +291,7 @@
     }
     
     if ([[TGCamera getOption:kTGCameraOptionCustomCropSize] boolValue] == YES) {
-        cropSize = CGSizeMake(_captureView.frame.size.width / 2.5, 40);
+        cropSize = CGSizeMake(_captureView.frame.size.width / [TGCameraViewController overlayWidth], 40);
     }
     
     dispatch_group_t group = dispatch_group_create();

@@ -25,6 +25,7 @@
 
 @import AssetsLibrary;
 #import "TGCameraShot.h"
+#import "TGCameraViewController.h"
 
 @interface TGCameraShot ()
 
@@ -106,7 +107,7 @@
 {
     UIImage *newImage = nil;
     
-    CGFloat halfWidth = image.size.width / 2.5;
+    CGFloat halfWidth = image.size.width / [TGCameraViewController overlayWidth];
     return [TGCameraShot image:image croppedImageInRect:
             CGRectMake((image.size.width - halfWidth) / 2,
                        image.size.height/2 - cropSize.height * 4,

@@ -34,5 +34,6 @@
 @interface TGCameraViewController : UIViewController
 
 @property (weak) id<TGCameraDelegate> delegate;
++(CGFloat)overlayWidth;
 
 @end
